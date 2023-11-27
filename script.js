@@ -48,7 +48,12 @@ function getPosts() {
 
 function renderPost(data) {
 	post.classList.add('post__info--active');
-	post.innerHTML = `<h2 class="post__title" >${data.title}</h2><p class="post__text" >${data.body}</p><button class="post__button" id="btn-comment">Get comments</button>`;
+	post.innerHTML = `
+	<h2 class="post__id" >POST ID: ${data.id}</h2>
+	<h2 class="post__title" >${data.title}</h2>
+	<p class="post__text" >${data.body}</p>
+	<button class="post__button" id="btn-comment">Get comments</button>
+	`;
 
 	inputValue = input.value;
 	input.value = '';
@@ -57,6 +62,11 @@ function renderPost(data) {
 	btnComment.addEventListener('click', () => {
 		getComments(inputValue);
 	})
+}
+
+function clearPost() {
+	post.classList.remove('post__info--active');
+	post.innerHTML = '';
 }
 
 function getComments(id) {
@@ -74,12 +84,7 @@ function getComments(id) {
 	])
 		.then((response) => response.json())
 		.then((data) => {
-			comments.classList.add('comments--active');
-			comments.innerHTML = '';
-			data.forEach((element) => {
-				comments.innerHTML += `<div class="comment"><h3 class="comment__title">${element.name}</h3><p class="comment__text">${element.body}</p></div>`;
-			});
-			hideLoader();
+			renderComments(data);
 		})
 		.catch((e) => {
 			hideLoader();
@@ -90,23 +95,38 @@ function getComments(id) {
 		});
 }
 
+function renderComments(data) {
+	console.log(data);
+	comments.classList.add('comments--active');
+	comments.innerHTML = '';
+	data.forEach((element) => {
+		comments.innerHTML += `
+		<div class="comment">
+			<h3 class="comment__id">Comment ID: ${element.id}</h3>
+			<h3 class="comment__text">${element.email}</h3>
+			<h3 class="comment__title">${element.name}</h3>
+			<p class="comment__text">${element.body}</p>
+		</div>`;
+	});
+}
+
+function clearComments() {
+	comments.classList.remove('comments--active');
+	comments.innerHTML = '';
+}
+
 
 
 submit.addEventListener('click', () => {
 	getPosts();
-
-	comments.classList.remove('comments--active');
-	comments.innerHTML = '';
+	clearComments()
 });
 
 function renderError(error) {
 	errorWrap.classList.add('error--active');
 
-	post.classList.remove('post__info--active');
-	post.innerHTML = '';
-
-	comments.classList.remove('comments--active');
-	comments.innerHTML = '';
+	clearPost()
+	clearComments()
 
 	switch (error) {
 		case 'invalidValue':
