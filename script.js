@@ -7,39 +7,43 @@ const comments = document.querySelector('.comments');
 const loader = document.querySelector('.loader');
 let inputValue;
 
-function showLoader() {
-	loader.classList.add('loader--active');
+function toggleLoader(show) {
+	if (show) {
+		loader.classList.add('loader--active');
+	} else {
+		loader.classList.remove('loader--active');
+	}
 }
 
-function hideLoader() {
-	loader.classList.remove('loader--active');
+function makeRequestWithTimeout(url, timeout) {
+	const timeoutPromise = new Promise((_, reject) => {
+		setTimeout(() => {
+			reject('Request timed out');
+		}, timeout);
+	});
+
+	return Promise.race([
+		fetch(url),
+		timeoutPromise,
+	]);
 }
 
 function getPosts() {
 	inputValue = input.value;
 	if (inputValue >= 1 && inputValue <= 100) {
-		showLoader();
+		toggleLoader(true);
 
-		const timeoutPromise = new Promise((_, reject) => {
-			setTimeout(() => {
-				reject('Request timed out');
-			}, 5000);
-		});
-
-		Promise.race([
-			fetch(`https://jsonplaceholder.typicode.com/posts/${input.value}`),
-			timeoutPromise,
-		])
+		makeRequestWithTimeout(`https://jsonplaceholder.typicode.com/posts/${input.value}`, 5000)
 			.then((response) => response.json())
 			.then((data) => {
 				renderPost(data);
 			})
 			.catch((e) => {
-				hideLoader();
+				toggleLoader(false);
 				renderError(e);
 			})
 			.finally(() => {
-				hideLoader();
+				toggleLoader(false);
 			});
 	} else {
 		renderError('invalidValue');
@@ -57,11 +61,6 @@ function renderPost(data) {
 
 	inputValue = input.value;
 	input.value = '';
-
-	let btnComment = document.querySelector('#btn-comment');
-	btnComment.addEventListener('click', () => {
-		getComments(inputValue);
-	})
 }
 
 function clearPost() {
@@ -69,45 +68,40 @@ function clearPost() {
 	post.innerHTML = '';
 }
 
+post.addEventListener('click', (event) => {
+	if (event.target.id === 'btn-comment') {
+		getComments(inputValue);
+	}
+});
+
 function getComments(id) {
-	showLoader();
+	toggleLoader(true);
 
-	const timeoutPromise = new Promise((_, reject) => {
-		setTimeout(() => {
-			reject('Request timed out');
-		}, 5000);
-	});
-
-	Promise.race([
-		fetch(`https://jsonplaceholder.typicode.com/posts/${id}/comments`),
-		timeoutPromise,
-	])
+	makeRequestWithTimeout(`https://jsonplaceholder.typicode.com/posts/${id}/comments`, 5000)
 		.then((response) => response.json())
 		.then((data) => {
 			renderComments(data);
 		})
 		.catch((e) => {
-			hideLoader();
+			toggleLoader(false);
 			renderError(e);
 		})
 		.finally(() => {
-			hideLoader();
+			toggleLoader(false);
 		});
 }
 
 function renderComments(data) {
-	console.log(data);
 	comments.classList.add('comments--active');
 	comments.innerHTML = '';
-	data.forEach((element) => {
-		comments.innerHTML += `
-		<div class="comment">
+	comments.innerHTML = data.map(element => `
+	<div class="comment">
 			<h3 class="comment__id">Comment ID: ${element.id}</h3>
 			<h3 class="comment__text">${element.email}</h3>
 			<h3 class="comment__title">${element.name}</h3>
 			<p class="comment__text">${element.body}</p>
-		</div>`;
-	});
+	</div>`
+	).join('');
 }
 
 function clearComments() {
@@ -115,14 +109,13 @@ function clearComments() {
 	comments.innerHTML = '';
 }
 
-
-
 submit.addEventListener('click', () => {
 	getPosts();
 	clearComments()
 });
 
 function renderError(error) {
+	toggleLoader(false);
 	errorWrap.classList.add('error--active');
 
 	clearPost()
