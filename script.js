@@ -1,11 +1,11 @@
 const input = document.querySelector('.input-value');
+let inputValue;
 const submit = document.querySelector('.input-submit');
 const post = document.querySelector('.post__info');
+const comments = document.querySelector('.comments');
 const errorWrap = document.querySelector('.error');
 const errorText = document.querySelector('.error__text');
-const comments = document.querySelector('.comments');
 const loader = document.querySelector('.loader');
-let inputValue;
 
 function toggleLoader(show) {
 	if (show) {
@@ -39,7 +39,6 @@ function getPosts() {
 				renderPost(data);
 			})
 			.catch((e) => {
-				toggleLoader(false);
 				renderError(e);
 			})
 			.finally(() => {
@@ -83,7 +82,6 @@ function getComments(id) {
 			renderComments(data);
 		})
 		.catch((e) => {
-			toggleLoader(false);
 			renderError(e);
 		})
 		.finally(() => {
